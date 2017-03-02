@@ -23,8 +23,6 @@
 #include "shadervideomaterial.h"
 #include "shadervideoshader.h"
 
-#include <core/media/video/sink.h>
-
 #include <camera_compatibility_layer.h>
 #include <qtubuntu_media_signals.h>
 #include <surface_texture_client_hybris.h>
@@ -63,8 +61,6 @@ ShaderVideoMaterial::ShaderVideoMaterial(const QVideoSurfaceFormat &format)
     setFlag(CustomCompileStep, true);
     connect(SharedSignal::instance(), &SharedSignal::setOrientation,
             this, &ShaderVideoMaterial::onSetOrientation);
-    connect(SharedSignal::instance(), &SharedSignal::sinkReset,
-            this, &ShaderVideoMaterial::onSinkReset);
 }
 
 QSGMaterialShader *ShaderVideoMaterial::createShader() const
@@ -103,32 +99,15 @@ void ShaderVideoMaterial::setSurfaceTextureClient(SurfaceTextureClientHybris sur
     m_surfaceTextureClient = surface_texture_client;
 }
 
-void ShaderVideoMaterial::setGLVideoSink(const std::shared_ptr<core::ubuntu::media::video::Sink>& sink)
-{
-    m_videoSink = sink;
-}
-
-const std::shared_ptr<core::ubuntu::media::video::Sink>& ShaderVideoMaterial::glVideoSink() const
-{
-    return m_videoSink;
-}
-
 void ShaderVideoMaterial::updateTexture()
 {
-    if (!m_camControl && !m_textureId && !m_videoSink) {
+    if (!m_camControl && !m_textureId) {
         return;
     }
 
     if (m_camControl != NULL) {
         android_camera_update_preview_texture(m_camControl);
         android_camera_get_preview_texture_transformation(m_camControl, m_textureMatrix);
-    } else if (m_videoSink && !m_readyToRender) {
-        m_readyToRender = true;
-        return;
-    } else if (m_videoSink && m_readyToRender) {
-        if (m_videoSink->swap_buffers()) {
-            m_videoSink->transformation_matrix(static_cast<float*>(m_textureMatrix));
-        }
     }
 
     // See if the video needs rotation
@@ -150,21 +129,6 @@ void ShaderVideoMaterial::onSetOrientation(const SharedSignal::Orientation& orie
 {
     m_orientation = orientation;
     m_frameSize = size;
-}
-
-// Makes sure that when a playing a video, if a new video is requested for playback during
-// playback of the first video using the same player session, that we don't try and call
-// m_videoSink->swap_buffers() until a new valid m_videoSink pointer is set.
-void ShaderVideoMaterial::onSinkReset()
-{
-    qDebug() << Q_FUNC_INFO;
-
-    // Make sure we free any locked graphics buffer
-    if (m_videoSink && m_readyToRender)
-        m_videoSink->swap_buffers();
-
-    m_videoSink.reset();
-    m_readyToRender = false;
 }
 
 // Takes a GLfloat texture matrix and desired orientation, and outputs a rotated and

@@ -79,17 +79,6 @@ void ShaderVideoNode::setCurrentFrame(const QVideoFrame &frame, FrameFlags flags
             return;
         }
         m_material->setCamControl((CameraControl*)ci);
-    } else if (frame.availableMetaData().contains("GLVideoSink")) {
-        auto sink = frame.metaData("GLVideoSink").value<std::shared_ptr<core::ubuntu::media::video::Sink>>();
-        qDebug() << "** Setting GLConsumer instance: " << sink.get();
-        m_material->setGLVideoSink(sink);
-        if (not sink) {
-            qWarning() << "No valid GL video sink instance in video frame";
-            return;
-        }
-
-        // Signal AalMediaPlayerService that glConsumer has been set
-        Q_EMIT SharedSignal::instance()->glConsumerSet();
     }
 
     if (frame.handle().toUInt() == 0) {

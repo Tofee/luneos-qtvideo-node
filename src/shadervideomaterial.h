@@ -31,10 +31,6 @@
 
 #include <memory>
 
-namespace core { namespace ubuntu { namespace media { namespace video {
-class Sink;
-} } } }
-
 struct CameraControl;
 struct MediaPlayerWrapper;
 class ShaderVideoShader;
@@ -59,8 +55,6 @@ public:
     GLuint textureId() const { return m_textureId; }
 
     void setSurfaceTextureClient(SurfaceTextureClientHybris surface_texture_client);
-    void setGLVideoSink(const std::shared_ptr<core::ubuntu::media::video::Sink>& sink);
-    const std::shared_ptr<core::ubuntu::media::video::Sink>& glVideoSink() const;
 
     void updateTexture();
 
@@ -68,7 +62,6 @@ public:
 
 private Q_SLOTS:
     void onSetOrientation(const SharedSignal::Orientation& orientation, const QSize &size);
-    void onSinkReset();
 
 private:
     QMatrix4x4 rotateAndFlip(GLfloat *m, const SharedSignal::Orientation &orientation);
@@ -80,7 +73,6 @@ private:
     CameraControl *m_camControl;
     GLuint m_textureId;
     SurfaceTextureClientHybris m_surfaceTextureClient;
-    std::shared_ptr<core::ubuntu::media::video::Sink> m_videoSink;
     bool m_readyToRender;
     static ShaderVideoShader *m_videoShader; // the shader is cached in the Qt scene graph
     SharedSignal::Orientation m_orientation;
